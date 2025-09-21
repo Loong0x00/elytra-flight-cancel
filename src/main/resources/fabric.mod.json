@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "elytra_flight_cancel",
+	"version": "${version}",
+	"name": "Elytra Flight Cancel",
+	"description": "Allows players to cancel elytra flight by pressing spacebar twice during flight.",
+	"authors": [
+		"ElytraFlightCancel Team"
+	],
+	"contact": {
+		"homepage": "https://github.com/your-username/elytra-flight-cancel",
+		"sources": "https://github.com/your-username/elytra-flight-cancel"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/elytra_flight_cancel/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.elytraflightcancel.ElytraFlightCancelMod"
+		],
+		"client": [
+			"com.elytraflightcancel.ElytraFlightCancelModClient"
+		]
+	},
+	"mixins": [
+		"elytra_flight_cancel.mixins.json",
+		{
+			"config": "elytra_flight_cancel.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.21.0",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
