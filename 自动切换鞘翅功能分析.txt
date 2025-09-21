@@ -1,0 +1,91 @@
+Minecraft Mod - 自动切换鞘翅功能实现分析
+==============================================
+
+## 功能概述
+这个mod实现了一个智能的装备切换系统，能够：
+- 起飞时：自动将胸甲切换为鞘翅
+- 落地时：自动将鞘翅切换回胸甲
+
+## 核心文件结构
+1. AutoSwitchElytraUtil.java - 核心工具类，包含状态检测和切换逻辑
+2. MixinClientPlayerEntity.java - Mixin注入类，负责在游戏循环中触发切换
+3. Configs.java - 配置管理，包含功能开关
+
+## 技术实现原理
+
+### 1. 配置系统
+- 配置项：autoSwitchElytra (boolean类型)
+- 支持热键切换功能开关
+- 位置：Configs.java 第95行
+
+### 2. 状态检测机制
+核心方法：myCheckFallFlying(Player player)
+检测条件：
+- !player.isOnGround() - 玩家不在地面上
+- !player.isFallFlying() - 玩家当前没有在滑翔
+- !player.isInWater() - 玩家不在水中  
+- !player.hasEffect(MobEffects.LEVITATION) - 玩家没有漂浮效果
+
+当所有条件都满足时，判定玩家需要鞘翅。
+
+### 3. 装备切换核心逻辑
+方法：autoSwitch(int sourceSlot, Minecraft client, LocalPlayer player, Predicate<ItemStack> check)
+
+实现步骤：
+1. 检查游戏模式是否有效
+2. 确保玩家界面是物品栏（如果不是则关闭当前界面）
+3. 遍历物品栏寻找目标物品
+4. 通过三次鼠标点击模拟手动切换：
+   - 第一次点击：拿起目标物品
+   - 第二次点击：点击胸甲槽位（放下目标物品，拿起原胸甲）
+   - 第三次点击：点击原位置（放下原胸甲）
+
+### 4. 触发机制（Mixin注入）
+使用Mixin框架注入到LocalPlayer的aiStep方法中，在每个游戏tick执行检查。
+
+#### 切换到鞘翅的逻辑：
+- 注入点：getItemBySlot方法调用处
+- 触发条件：
+  * 功能已启用
+  * 当前胸甲槽位不是鞘翅
+  * 满足myCheckFallFlying条件
+- 执行：搜索物品栏中的鞘翅并切换
+
+#### 切换回胸甲的逻辑：
+- 注入点：isFallFlying方法调用后
+- 触发条件：
+  * 功能已启用
+  * 当前胸甲槽位是鞘翅
+  * 上一帧在滑翔状态
+  * 当前帧不在滑翔状态
+- 执行：搜索物品栏中的胸甲并切换
+
+### 5. 物品识别机制
+- 鞘翅识别：itemStack.is(Items.ELYTRA)
+- 胸甲识别：Registry.ITEM.getKey(itemStack.getItem()).toString().contains("_chestplate")
+
+### 6. 状态跟踪
+使用prevFallFlying变量跟踪玩家上一帧的滑翔状态，通过状态变化来精确判断切换时机。
+
+## 技术特点
+
+### 优点：
+1. 无缝集成：通过Mixin技术深度集成到游戏循环中
+2. 精确时机：每个tick检查，响应迅速
+3. 安全可靠：模拟真实玩家操作，不会被反作弊系统检测
+4. 兼容性好：支持所有类型的胸甲
+5. 可配置：支持热键开关
+
+### 实现亮点：
+1. 状态机设计：通过prevFallFlying实现状态变化检测
+2. 谓词模式：使用Predicate<ItemStack>实现灵活的物品匹配
+3. 容错处理：确保界面状态正确后再执行切换
+4. 多版本兼容：使用条件编译支持不同MC版本
+
+## 代码位置
+- 主要逻辑：src/main/java/com/plusls/ommc/feature/autoSwitchElytra/
+- Mixin注入：src/main/java/com/plusls/ommc/mixin/feature/autoSwitchElytra/
+- 配置管理：src/main/java/com/plusls/ommc/config/Configs.java
+
+## 总结
+这是一个设计精巧的客户端mod功能，通过状态检测、Mixin注入和模拟操作三个核心技术，实现了智能的装备自动切换。代码结构清晰，逻辑严谨，是学习Minecraft mod开发的优秀范例。
